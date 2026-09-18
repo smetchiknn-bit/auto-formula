@@ -52,24 +52,7 @@ body {
   animation: float 10s ease-in-out infinite;
 }
 
-/* Hard shadow style */
-.shadow-hard {
-  box-shadow: 8px 8px 0px #14532d;
-}
-
-.shadow-hard-sm {
-  box-shadow: 4px 4px 0px #14532d;
-}
-
-.shadow-hard-green {
-  box-shadow: 6px 6px 0px #16a34a;
-}
-
-/* Button hover effect */
-.btn-press:active {
-  transform: translate(4px, 4px);
-  box-shadow: 0px 0px 0px #14532d;
-}
+/* Shadows removed per design */
 
 /* Scrollbar */
 ::-webkit-scrollbar {

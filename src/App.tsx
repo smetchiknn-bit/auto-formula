@@ -234,32 +234,24 @@ function App() {
 
       {/* Основной контент */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative z-10">
-        {/* Логотип и заголовок */}
-        <div className="text-center mb-8">
-          <img src="/logo.svg" alt="AutoFormula" className="h-12 md:h-14 mx-auto mb-4" />
-          <p className="text-green-800 text-lg font-medium">
-            Автоматическая вставка формул в файл Excel
-          </p>
+        {/* Заголовок с логотипами */}
+        <div className="flex items-center justify-center gap-4 md:gap-6 mb-2">
+          <img src="/logo1C.svg" alt="1C" className="w-12 h-12 md:w-14 md:h-14" />
+          <div className="text-center">
+            <h1 className="text-2xl md:text-4xl font-extrabold text-green-900 tracking-tight">
+              ФОРМУЛЫ для КОРРЕКТИРОВКИ
+            </h1>
+            <p className="text-green-700 text-base md:text-lg font-medium mt-1">
+              Автоматическая вставка формул в файл Excel
+            </p>
+          </div>
+          <img src="/logoXLSX.svg" alt="Excel" className="w-12 h-12 md:w-14 md:h-14" />
         </div>
 
-        {/* Логотипы 1C и Excel */}
-        <div className="flex justify-center gap-6 mb-8">
-          <div className="flex flex-col items-center group">
-            <div className="w-14 h-14 bg-white rounded-xl shadow-hard-sm flex items-center justify-center group-hover:translate-x-[-2px] group-hover:translate-y-[-2px] group-hover:shadow-hard transition-all duration-200">
-              <img src="/logoXLSX.svg" alt="Excel" className="w-9 h-9" />
-            </div>
-            <span className="text-xs text-green-800 mt-2 font-medium">Excel</span>
-          </div>
-          <div className="flex flex-col items-center group">
-            <div className="w-14 h-14 bg-white rounded-xl shadow-hard-sm flex items-center justify-center group-hover:translate-x-[-2px] group-hover:translate-y-[-2px] group-hover:shadow-hard transition-all duration-200">
-              <img src="/logo1C.svg" alt="1C" className="w-9 h-9" />
-            </div>
-            <span className="text-xs text-green-800 mt-2 font-medium">1С</span>
-          </div>
-        </div>
+
 
         {/* Основная карточка */}
-        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-hard border-2 border-green-800 p-6 md:p-8">
+        <div className="w-full max-w-2xl bg-white rounded-2xl border-2 border-green-800 p-6 md:p-8">
           {/* Зона загрузки */}
           <div
             onDrop={handleDrop}
@@ -270,7 +262,7 @@ function App() {
                 ? 'border-green-600 bg-green-50 scale-[1.02]' 
                 : 'border-green-400 hover:border-green-600 hover:bg-green-50/50'
             }`}
-            style={{ borderWidth: '3px' }}
+            style={{ borderWidth: '3px', minHeight: '280px' }}
           >
             <div className="mb-4">
               <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
@@ -283,16 +275,18 @@ function App() {
             <p className="text-green-600 text-sm mb-5">
               Перетащите файл Excel сюда или нажмите кнопку
             </p>
-            <label className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl cursor-pointer transition-all shadow-hard-sm btn-press">
-              <i className="fas fa-folder-open mr-2"></i>
-              Выбрать файл
-              <input
-                type="file"
-                accept=".xlsx,.xlsm"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
+            <div className="mt-8">
+              <label className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl cursor-pointer transition-all">
+                <i className="fas fa-folder-open mr-2"></i>
+                Выбрать файл
+                <input
+                  type="file"
+                  accept=".xlsx,.xlsm"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
 
           {/* Имя файла */}
@@ -418,7 +412,7 @@ function App() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowVersionHistory(false)}>
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
             <div 
-              className="relative bg-white rounded-2xl shadow-hard border-2 border-green-800 max-w-lg w-full max-h-[80vh] overflow-y-auto p-6"
+              className="relative bg-white rounded-2xl border-2 border-green-800 max-w-lg w-full max-h-[80vh] overflow-y-auto p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-5">
