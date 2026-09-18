@@ -72,10 +72,20 @@ function App() {
       }
 
       setLastRowInfo(lastRow);
-      setStatus(`Строка: ${lastRow}. Вставка значений и формул...`);
+      setStatus(`Строка: ${lastRow}. Раскрытие колонок и вставка формул...`);
 
       const colAS = 45;
       const colAT = 46;
+
+      // Раскрываем скрытые колонки AS и AT (если они скрыты)
+      const colASObj = worksheet.getColumn(colAS);
+      const colATObj = worksheet.getColumn(colAT);
+      if (colASObj.hidden) {
+        colASObj.hidden = false;
+      }
+      if (colATObj.hidden) {
+        colATObj.hidden = false;
+      }
 
       // Очистка ячеек
       const cellsToClean = [
@@ -377,8 +387,12 @@ function App() {
                 <span>Курсор устанавливается на <strong>AT4</strong></span>
               </li>
               <li className="flex items-start">
+                <i className="fas fa-eye text-green-600 mr-3 mt-0.5 w-4"></i>
+                <span>Колонки <strong>AS</strong> и <strong>AT</strong> автоматически <strong>раскрываются</strong> (если были скрыты)</span>
+              </li>
+              <li className="flex items-start">
                 <i className="fas fa-shield-alt text-green-600 mr-3 mt-0.5 w-4"></i>
-                <span>Структура файла <strong>не нарушается</strong>, скрытые колонки сохраняются</span>
+                <span>Остальная структура файла <strong>не нарушается</strong></span>
               </li>
             </ul>
           </div>
