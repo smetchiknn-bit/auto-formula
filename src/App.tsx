@@ -2,6 +2,32 @@ import { useState, useCallback } from 'react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
+// Версия приложения и история изменений
+const APP_VERSION = '1.0.0';
+const APP_DATE = '15.01.2026';
+
+interface VersionEntry {
+  version: string;
+  date: string;
+  changes: string[];
+}
+
+const VERSION_HISTORY: VersionEntry[] = [
+  {
+    version: '1.0.0',
+    date: '15.01.2026',
+    changes: [
+      'Первый стабильный релиз',
+      'Автоматическое определение последней заполненной строки',
+      'Вставка значений СМР, ТМЦ, ВСЕГО в ячейки AS2–AS4',
+      'Вставка формул СУММПРОИЗВ в ячейки AT2–AT4',
+      'Красный цвет шрифта и полужирное начертание',
+      'Установка курсора на ячейку AT4',
+      'Сохранение структуры файла и скрытых колонок',
+    ],
+  },
+];
+
 function App() {
   const [fileName, setFileName] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -9,6 +35,8 @@ function App() {
   const [error, setError] = useState<string>('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [lastRowInfo, setLastRowInfo] = useState<number>(0);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const processFile = useCallback(async (file: File) => {
     setIsProcessing(true);
@@ -18,24 +46,20 @@ function App() {
     setLastRowInfo(0);
 
     try {
-      // Читаем файл как ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
       
       setStatus('Обработка файла...');
       
-      // Загружаем workbook
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(arrayBuffer as ArrayBuffer);
 
-      // Ищем лист "Корректировка 1"
       const worksheet = workbook.getWorksheet('Корректировка 1');
       if (!worksheet) {
-        throw new Error('Лист "Корректировка 1" не найден в файле. Убедитесь, что лист существует и имеет точное название "Корректировка 1".');
+        throw new Error('Лист "Корректировка 1" не найден в файле. Убедитесь, что лист существует и имеет точное название.');
       }
 
       setStatus('Определение последней заполненной строки...');
 
-      // Определяем последнюю заполненную строку на листе
       let lastRow = 0;
       worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
         if (rowNumber > lastRow) {
@@ -43,19 +67,17 @@ function App() {
         }
       });
 
-      // Если не нашли данных, используем минимум 6
       if (lastRow < 6) {
         lastRow = 6;
       }
 
       setLastRowInfo(lastRow);
-      setStatus(`Последняя заполненная строка: ${lastRow}. Вставка значений и формул...`);
+      setStatus(`Строка: ${lastRow}. Вставка значений и формул...`);
 
-      // Колонки: AS = 45, AT = 46
       const colAS = 45;
       const colAT = 46;
 
-      // Очищаем ячейки перед вставкой (на случай если они заполнены)
+      // Очистка ячеек
       const cellsToClean = [
         { row: 2, col: colAS },
         { row: 3, col: colAS },
@@ -70,7 +92,7 @@ function App() {
         cell.value = null;
       });
 
-      // === Вставка слов в AS2, AS3, AS4 ===
+      // Вставка слов
       const cellAS2 = worksheet.getCell(2, colAS);
       cellAS2.value = 'СМР';
       cellAS2.font = { bold: true, color: { argb: 'FFFF0000' } };
@@ -83,35 +105,26 @@ function App() {
       cellAS4.value = 'ВСЕГО';
       cellAS4.font = { bold: true, color: { argb: 'FFFF0000' } };
 
-      // === Вставка формул в AT2, AT3, AT4 ===
-      // Формулы в формате xlsx (английские имена функций)
-      // При открытии в Excel с русской локалью они будут отображаться на русском
-
-      // AT2 - формула для СМР:
-      // =(СУММПРОИЗВ($X6:$X[lastRow];R6:R[lastRow];ПРОМЕЖУТОЧНЫЕ.ИТОГИ(3;СМЕЩ($X$6:$X$[lastRow];СТРОКА($X$6:$X$[lastRow])-СТРОКА($X6);;1))))+(СУММПРОИЗВ($Y6:$Y[lastRow];AA6:AA[lastRow];ПРОМЕЖУТОЧНЫЕ.ИТОГИ(3;СМЕЩ($Y$6:$Y$[lastRow];СТРОКА($Y$6:$Y$[lastRow])-СТРОКА($X6);;1))))
+      // Формулы
       const formulaAT2 = `SUMPRODUCT($X6:$X${lastRow},R6:R${lastRow},SUBTOTAL(3,OFFSET($X$6:$X$${lastRow},ROW($X$6:$X$${lastRow})-ROW($X6),,1)))+SUMPRODUCT($Y6:$Y${lastRow},AA6:AA${lastRow},SUBTOTAL(3,OFFSET($Y$6:$Y$${lastRow},ROW($Y$6:$Y$${lastRow})-ROW($X6),,1)))`;
       
       const cellAT2 = worksheet.getCell(2, colAT);
       cellAT2.value = { formula: formulaAT2 };
       cellAT2.font = { bold: true, color: { argb: 'FFFF0000' } };
 
-      // AT3 - формула для ТМЦ:
-      // =(СУММПРОИЗВ($X6:$X[lastRow];Q6:Q[lastRow];ПРОМЕЖУТОЧНЫЕ.ИТОГИ(3;СМЕЩ($X$6:$X$[lastRow];СТРОКА($X$6:$X$[lastRow])-СТРОКА($X6);;1))))+(СУММПРОИЗВ($Y6:$Y[lastRow];Z6:Z[lastRow];ПРОМЕЖУТОЧНЫЕ.ИТОГИ(3;СМЕЩ($Y$6:$Y$[lastRow];СТРОКА($Y$6:$Y$[lastRow])-СТРОКА($X6);;1))))
       const formulaAT3 = `SUMPRODUCT($X6:$X${lastRow},Q6:Q${lastRow},SUBTOTAL(3,OFFSET($X$6:$X$${lastRow},ROW($X$6:$X$${lastRow})-ROW($X6),,1)))+SUMPRODUCT($Y6:$Y${lastRow},Z6:Z${lastRow},SUBTOTAL(3,OFFSET($Y$6:$Y$${lastRow},ROW($Y$6:$Y$${lastRow})-ROW($X6),,1)))`;
       
       const cellAT3 = worksheet.getCell(3, colAT);
       cellAT3.value = { formula: formulaAT3 };
       cellAT3.font = { bold: true, color: { argb: 'FFFF0000' } };
 
-      // AT4 - формула ВСЕГО = AT2 + AT3
       const formulaAT4 = 'AT2+AT3';
       
       const cellAT4 = worksheet.getCell(4, colAT);
       cellAT4.value = { formula: formulaAT4 };
       cellAT4.font = { bold: true, color: { argb: 'FFFF0000' } };
 
-      // Устанавливаем курсор на ячейку AT4
-      // В exceljs это делается через worksheet views
+      // Курсор на AT4
       worksheet.views = [
         { 
           state: 'normal' as const, 
@@ -122,13 +135,11 @@ function App() {
 
       setStatus('Сохранение файла...');
 
-      // Сохраняем файл
       const output = await workbook.xlsx.writeBuffer();
       const blob = new Blob([output], { 
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
       });
       
-      // Формируем имя файла для скачивания
       const outputFileName = file.name.replace(/\.xlsx?$/i, '') + '_Корректировка.xlsx';
       saveAs(blob, outputFileName);
 
@@ -161,6 +172,7 @@ function App() {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (file) {
       if (!file.name.match(/\.xlsx?$/i)) {
@@ -177,6 +189,13 @@ function App() {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
   };
 
   const resetApp = () => {
@@ -188,58 +207,75 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        {/* Заголовок */}
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Плавающие математические символы */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <span className="float-symbol absolute top-[10%] left-[5%] text-6xl font-bold text-green-700 opacity-15">Σ</span>
+        <span className="float-symbol-reverse absolute top-[20%] right-[8%] text-5xl font-bold text-green-800 opacity-10">₽</span>
+        <span className="float-symbol-slow absolute top-[60%] left-[10%] text-7xl font-bold text-green-600 opacity-10">=</span>
+        <span className="float-symbol absolute top-[75%] right-[15%] text-5xl font-bold text-green-700 opacity-12">Σ</span>
+        <span className="float-symbol-reverse absolute top-[40%] left-[80%] text-4xl font-bold text-green-800 opacity-10">+</span>
+        <span className="float-symbol-slow absolute top-[85%] left-[50%] text-6xl font-bold text-green-600 opacity-8">%</span>
+        <span className="float-symbol absolute top-[15%] left-[45%] text-4xl font-bold text-green-700 opacity-10">÷</span>
+        <span className="float-symbol-reverse absolute top-[50%] left-[30%] text-5xl font-bold text-green-800 opacity-8">∑</span>
+        <span className="float-symbol-slow absolute top-[30%] right-[25%] text-4xl font-bold text-green-600 opacity-12">×</span>
+        <span className="float-symbol absolute top-[70%] left-[70%] text-5xl font-bold text-green-700 opacity-10">₽</span>
+      </div>
+
+      {/* Основной контент */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative z-10">
+        {/* Логотип и заголовок */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-            📊 Формулы для Корректировки
-          </h1>
-          <p className="text-blue-200 text-lg">
-            Автоматическая вставка формул и значений в файл Excel
+          <img src="/logo.svg" alt="AutoFormula" className="h-12 md:h-14 mx-auto mb-4" />
+          <p className="text-green-800 text-lg font-medium">
+            Автоматическая вставка формул в файл Excel
           </p>
         </div>
 
-        {/* Логотипы */}
+        {/* Логотипы 1C и Excel */}
         <div className="flex justify-center gap-6 mb-8">
           <div className="flex flex-col items-center group">
-            <img src="/logoXLSX.svg" alt="Excel" className="w-14 h-14 rounded-xl shadow-lg group-hover:scale-110 transition-transform" />
-            <span className="text-xs text-blue-300 mt-1">Excel</span>
+            <div className="w-14 h-14 bg-white rounded-xl shadow-hard-sm flex items-center justify-center group-hover:translate-x-[-2px] group-hover:translate-y-[-2px] group-hover:shadow-hard transition-all duration-200">
+              <img src="/logoXLSX.svg" alt="Excel" className="w-9 h-9" />
+            </div>
+            <span className="text-xs text-green-800 mt-2 font-medium">Excel</span>
           </div>
           <div className="flex flex-col items-center group">
-            <img src="/logoGS.svg" alt="Google Sheets" className="w-14 h-14 rounded-xl shadow-lg group-hover:scale-110 transition-transform" />
-            <span className="text-xs text-blue-300 mt-1">Google Sheets</span>
-          </div>
-          <div className="flex flex-col items-center group">
-            <img src="/logo1C.svg" alt="1C" className="w-14 h-14 rounded-xl shadow-lg group-hover:scale-110 transition-transform" />
-            <span className="text-xs text-blue-300 mt-1">1С</span>
-          </div>
-          <div className="flex flex-col items-center group">
-            <img src="/logoStiker.svg" alt="Стикер" className="w-14 h-14 rounded-xl shadow-lg group-hover:scale-110 transition-transform" />
-            <span className="text-xs text-blue-300 mt-1">Стикер</span>
+            <div className="w-14 h-14 bg-white rounded-xl shadow-hard-sm flex items-center justify-center group-hover:translate-x-[-2px] group-hover:translate-y-[-2px] group-hover:shadow-hard transition-all duration-200">
+              <img src="/logo1C.svg" alt="1C" className="w-9 h-9" />
+            </div>
+            <span className="text-xs text-green-800 mt-2 font-medium">1С</span>
           </div>
         </div>
 
         {/* Основная карточка */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8">
+        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-hard border-2 border-green-800 p-6 md:p-8">
           {/* Зона загрузки */}
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
-            className="border-2 border-dashed border-blue-400/50 rounded-xl p-8 text-center hover:border-blue-400 hover:bg-white/5 transition-all cursor-pointer mb-6"
+            onDragLeave={handleDragLeave}
+            className={`border-3 border-dashed rounded-xl p-8 text-center transition-all duration-200 mb-6 ${
+              isDragging 
+                ? 'border-green-600 bg-green-50 scale-[1.02]' 
+                : 'border-green-400 hover:border-green-600 hover:bg-green-50/50'
+            }`}
+            style={{ borderWidth: '3px' }}
           >
             <div className="mb-4">
-              <i className="fas fa-file-excel text-5xl text-green-400"></i>
+              <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                <i className="fas fa-file-excel text-3xl text-green-600"></i>
+              </div>
             </div>
-            <p className="text-white text-lg mb-2 font-medium">
+            <p className="text-green-900 text-lg mb-1 font-semibold">
               Укажите путь к файлу Корректировка
             </p>
-            <p className="text-blue-300 text-sm mb-4">
-              Перетащите файл Excel сюда или нажмите кнопку ниже
+            <p className="text-green-600 text-sm mb-5">
+              Перетащите файл Excel сюда или нажмите кнопку
             </p>
-            <label className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-8 rounded-lg cursor-pointer transition-all shadow-lg hover:shadow-xl active:scale-95">
+            <label className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl cursor-pointer transition-all shadow-hard-sm btn-press">
               <i className="fas fa-folder-open mr-2"></i>
-              Выбрать файл Excel
+              Выбрать файл
               <input
                 type="file"
                 accept=".xlsx,.xlsm"
@@ -251,18 +287,20 @@ function App() {
 
           {/* Имя файла */}
           {fileName && (
-            <div className="bg-white/5 rounded-lg p-4 mb-4 flex items-center justify-between">
+            <div className="bg-green-50 rounded-xl p-4 mb-4 flex items-center justify-between border border-green-200">
               <div className="flex items-center">
-                <i className="fas fa-file-excel text-green-400 mr-3 text-xl"></i>
+                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mr-3">
+                  <i className="fas fa-file-excel text-white text-lg"></i>
+                </div>
                 <div>
-                  <p className="text-white font-medium">{fileName}</p>
-                  <p className="text-blue-300 text-sm">Файл для обработки</p>
+                  <p className="text-green-900 font-semibold text-sm">{fileName}</p>
+                  <p className="text-green-600 text-xs">Файл для обработки</p>
                 </div>
               </div>
               {!isProcessing && (
                 <button 
                   onClick={resetApp}
-                  className="text-blue-400 hover:text-blue-300 transition-colors"
+                  className="text-green-600 hover:text-green-800 transition-colors p-2"
                   title="Сбросить"
                 >
                   <i className="fas fa-times-circle text-xl"></i>
@@ -271,35 +309,34 @@ function App() {
             </div>
           )}
 
-          {/* Статус обработки */}
+          {/* Статус */}
           {isProcessing && (
-            <div className="bg-blue-500/20 rounded-lg p-4 mb-4 flex items-center">
+            <div className="bg-green-100 rounded-xl p-4 mb-4 flex items-center border border-green-300">
               <div className="animate-spin mr-3">
-                <i className="fas fa-spinner text-blue-400 text-xl"></i>
+                <i className="fas fa-spinner text-green-600 text-xl"></i>
               </div>
-              <p className="text-blue-200">{status}</p>
+              <p className="text-green-800 font-medium">{status}</p>
             </div>
           )}
 
-          {/* Информация о последней строке */}
+          {/* Информация о строке */}
           {lastRowInfo > 0 && (
-            <div className="bg-indigo-500/20 rounded-lg p-3 mb-4 flex items-center">
-              <i className="fas fa-hashtag text-indigo-400 mr-3"></i>
-              <p className="text-indigo-200 text-sm">
-                Определена последняя заполненная строка: <strong className="text-white">{lastRowInfo}</strong>
+            <div className="bg-green-50 rounded-xl p-3 mb-4 flex items-center border border-green-200">
+              <i className="fas fa-hashtag text-green-600 mr-3"></i>
+              <p className="text-green-800 text-sm">
+                Последняя заполненная строка: <strong className="text-green-900">{lastRowInfo}</strong>
               </p>
             </div>
           )}
 
           {/* Успех */}
           {isSuccess && (
-            <div className="bg-green-500/20 rounded-lg p-4 mb-4 flex items-start">
-              <i className="fas fa-check-circle text-green-400 mr-3 text-xl mt-0.5"></i>
+            <div className="bg-green-100 rounded-xl p-4 mb-4 flex items-start border-2 border-green-400">
+              <i className="fas fa-check-circle text-green-600 mr-3 text-xl mt-0.5"></i>
               <div>
-                <p className="text-green-200 font-medium">✅ Файл успешно обработан и скачан!</p>
-                <p className="text-green-300 text-sm mt-1">
-                  Вставлены значения и формулы. Откройте файл в Excel — курсор установлен на ячейке AT4. 
-                  Вы можете проверить изменения и решить, сохранять ли файл.
+                <p className="text-green-900 font-bold">Файл успешно обработан!</p>
+                <p className="text-green-700 text-sm mt-1">
+                  Формулы вставлены. Файл скачан. Курсор на AT4.
                 </p>
               </div>
             </div>
@@ -307,60 +344,111 @@ function App() {
 
           {/* Ошибка */}
           {error && (
-            <div className="bg-red-500/20 rounded-lg p-4 mb-4 flex items-start">
-              <i className="fas fa-exclamation-triangle text-red-400 mr-3 text-xl mt-0.5"></i>
+            <div className="bg-red-50 rounded-xl p-4 mb-4 flex items-start border-2 border-red-300">
+              <i className="fas fa-exclamation-triangle text-red-500 mr-3 text-xl mt-0.5"></i>
               <div>
-                <p className="text-red-200 font-medium">Ошибка обработки</p>
-                <p className="text-red-300 text-sm mt-1">{error}</p>
+                <p className="text-red-800 font-bold">Ошибка</p>
+                <p className="text-red-600 text-sm mt-1">{error}</p>
               </div>
             </div>
           )}
 
-          {/* Информация о том что будет сделано */}
-          <div className="bg-white/5 rounded-lg p-5 mt-4">
-            <h3 className="text-white font-semibold mb-3 flex items-center">
-              <i className="fas fa-list-check text-blue-400 mr-2"></i>
-              Что будет сделано с файлом:
+          {/* Описание действий */}
+          <div className="bg-green-50/50 rounded-xl p-5 border border-green-200">
+            <h3 className="text-green-900 font-bold mb-3 flex items-center">
+              <i className="fas fa-list-check text-green-600 mr-2"></i>
+              Что будет сделано:
             </h3>
-            <ul className="text-blue-200 text-sm space-y-3">
+            <ul className="text-green-800 text-sm space-y-2.5">
               <li className="flex items-start">
-                <span className="bg-blue-600/40 text-blue-200 rounded px-2 py-0.5 text-xs font-mono mr-3 mt-0.5 shrink-0">AS2-4</span>
-                <span>Вставка значений: <strong className="text-red-400">СМР</strong>, <strong className="text-red-400">ТМЦ</strong>, <strong className="text-red-400">ВСЕГО</strong></span>
+                <span className="bg-green-600 text-white rounded px-2 py-0.5 text-xs font-mono mr-3 mt-0.5 shrink-0 font-bold">AS</span>
+                <span>Ячейки AS2–AS4: значения <strong className="text-red-600">СМР</strong>, <strong className="text-red-600">ТМЦ</strong>, <strong className="text-red-600">ВСЕГО</strong></span>
               </li>
               <li className="flex items-start">
-                <span className="bg-blue-600/40 text-blue-200 rounded px-2 py-0.5 text-xs font-mono mr-3 mt-0.5 shrink-0">AT2</span>
-                <span>Формула СУММПРОИЗВ для расчёта <strong className="text-white">СМР</strong> (с автоопределением строки)</span>
+                <span className="bg-green-600 text-white rounded px-2 py-0.5 text-xs font-mono mr-3 mt-0.5 shrink-0 font-bold">AT</span>
+                <span>Ячейки AT2–AT4: формулы с автоопределением последней строки</span>
               </li>
               <li className="flex items-start">
-                <span className="bg-blue-600/40 text-blue-200 rounded px-2 py-0.5 text-xs font-mono mr-3 mt-0.5 shrink-0">AT3</span>
-                <span>Формула СУММПРОИЗВ для расчёта <strong className="text-white">ТМЦ</strong> (с автоопределением строки)</span>
+                <i className="fas fa-paint-brush text-yellow-600 mr-3 mt-0.5 w-4"></i>
+                <span><strong className="text-red-600">Красный шрифт</strong> + <strong>полужирный</strong> для всех вставленных ячеек</span>
               </li>
               <li className="flex items-start">
-                <span className="bg-blue-600/40 text-blue-200 rounded px-2 py-0.5 text-xs font-mono mr-3 mt-0.5 shrink-0">AT4</span>
-                <span>Формула <strong className="text-white">=AT2+AT3</strong> (ВСЕГО)</span>
-              </li>
-              <li className="flex items-start mt-2 pt-2 border-t border-white/10">
-                <i className="fas fa-paint-brush text-yellow-400 mr-3 mt-0.5"></i>
-                <span>Ко всем ячейкам: <strong className="text-red-400">красный цвет шрифта</strong> + <strong className="text-white">полужирное начертание</strong></span>
+                <i className="fas fa-mouse-pointer text-green-600 mr-3 mt-0.5 w-4"></i>
+                <span>Курсор устанавливается на <strong>AT4</strong></span>
               </li>
               <li className="flex items-start">
-                <i className="fas fa-mouse-pointer text-green-400 mr-3 mt-0.5"></i>
-                <span>Курсор устанавливается на ячейку <strong className="text-white">AT4</strong></span>
-              </li>
-              <li className="flex items-start">
-                <i className="fas fa-shield-alt text-green-400 mr-3 mt-0.5"></i>
-                <span>Структура файла <strong className="text-white">не нарушается</strong>, скрытые колонки остаются скрытыми</span>
+                <i className="fas fa-shield-alt text-green-600 mr-3 mt-0.5 w-4"></i>
+                <span>Структура файла <strong>не нарушается</strong>, скрытые колонки сохраняются</span>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Футер */}
-        <div className="text-center mt-6 text-blue-400/60 text-sm">
-          <p>Лист: «Корректировка 1» | Ячейки: AS2–AS4 (значения), AT2–AT4 (формулы)</p>
-          <p className="mt-1 text-blue-400/40">Формулы адаптируются под последнюю заполненную строку автоматически</p>
+        {/* Подпись под карточкой */}
+        <div className="text-center mt-6 text-green-700/70 text-sm font-medium">
+          <p>Лист: «Корректировка 1» | Ячейки: AS2–AS4, AT2–AT4</p>
         </div>
       </div>
+
+      {/* Футер с кнопкой версии */}
+      <footer className="relative z-10 py-4 px-4 text-center">
+        <button
+          onClick={() => setShowVersionHistory(!showVersionHistory)}
+          className="text-green-600/40 hover:text-green-700 text-xs font-medium transition-colors underline underline-offset-2 decoration-dotted"
+        >
+          Версия {APP_VERSION} от {APP_DATE}
+        </button>
+
+        {/* Модальное окно истории версий */}
+        {showVersionHistory && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowVersionHistory(false)}>
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+            <div 
+              className="relative bg-white rounded-2xl shadow-hard border-2 border-green-800 max-w-lg w-full max-h-[80vh] overflow-y-auto p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl font-bold text-green-900 flex items-center">
+                  <i className="fas fa-code-branch text-green-600 mr-2"></i>
+                  История изменений
+                </h2>
+                <button
+                  onClick={() => setShowVersionHistory(false)}
+                  className="text-green-600 hover:text-green-800 transition-colors"
+                >
+                  <i className="fas fa-times text-xl"></i>
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                {VERSION_HISTORY.map((entry, idx) => (
+                  <div key={idx} className="border-l-4 border-green-600 pl-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
+                        v{entry.version}
+                      </span>
+                      <span className="text-green-600 text-xs font-medium">
+                        {entry.date}
+                      </span>
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full font-medium">
+                        Стабильная
+                      </span>
+                    </div>
+                    <ul className="space-y-1">
+                      {entry.changes.map((change, cIdx) => (
+                        <li key={cIdx} className="text-sm text-green-800 flex items-start">
+                          <i className="fas fa-check text-green-500 mr-2 mt-1 text-xs"></i>
+                          <span>{change}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </footer>
     </div>
   );
 }

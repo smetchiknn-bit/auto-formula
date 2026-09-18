@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" width="280" height="60">
+  <text x="0" y="44" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="800" fill="#16a34a">Auto</text>
+  <text x="110" y="44" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="800" fill="#14532d">Formula</text>
+  <circle cx="260" cy="20" r="8" fill="#16a34a" opacity="0.6"/>
+  <text x="256" y="25" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="white">Σ</text>
+</svg>
