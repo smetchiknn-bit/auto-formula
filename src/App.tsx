@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
+// Версия приложения и история изменений
 const APP_VERSION = '1.0.0';
 const APP_DATE = '15.01.2026';
 
@@ -77,6 +78,7 @@ function App() {
       const colAS = 45;
       const colAT = 46;
 
+      // Раскрываем скрытые колонки AS и AT (если они скрыты)
       const colASObj = worksheet.getColumn(colAS);
       const colATObj = worksheet.getColumn(colAT);
       if (colASObj.hidden) {
@@ -86,6 +88,7 @@ function App() {
         colATObj.hidden = false;
       }
 
+      // Очистка ячеек
       const cellsToClean = [
         { row: 2, col: colAS },
         { row: 3, col: colAS },
@@ -100,6 +103,7 @@ function App() {
         cell.value = null;
       });
 
+      // Вставка слов
       const cellAS2 = worksheet.getCell(2, colAS);
       cellAS2.value = 'СМР';
       cellAS2.font = { bold: true, color: { argb: 'FFFF0000' } };
@@ -112,6 +116,7 @@ function App() {
       cellAS4.value = 'ВСЕГО';
       cellAS4.font = { bold: true, color: { argb: 'FFFF0000' } };
 
+      // Формулы
       const formulaAT2 = `SUMPRODUCT($X6:$X${lastRow},R6:R${lastRow},SUBTOTAL(3,OFFSET($X$6:$X$${lastRow},ROW($X$6:$X$${lastRow})-ROW($X6),,1)))+SUMPRODUCT($Y6:$Y${lastRow},AA6:AA${lastRow},SUBTOTAL(3,OFFSET($Y$6:$Y$${lastRow},ROW($Y$6:$Y$${lastRow})-ROW($X6),,1)))`;
       
       const cellAT2 = worksheet.getCell(2, colAT);
@@ -130,6 +135,7 @@ function App() {
       cellAT4.value = { formula: formulaAT4 };
       cellAT4.font = { bold: true, color: { argb: 'FFFF0000' } };
 
+      // Курсор на AT4
       worksheet.views = [
         { 
           state: 'normal' as const, 
@@ -213,6 +219,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Плавающие математические символы */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <span className="float-symbol absolute top-[10%] left-[5%] text-6xl font-bold text-green-700 opacity-15">Σ</span>
         <span className="float-symbol-reverse absolute top-[20%] right-[8%] text-5xl font-bold text-green-800 opacity-10">₽</span>
@@ -226,9 +233,11 @@ function App() {
         <span className="float-symbol absolute top-[70%] left-[70%] text-5xl font-bold text-green-700 opacity-10">₽</span>
       </div>
 
+      {/* Основной контент */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative z-10">
+        {/* Заголовок с логотипами */}
         <div className="flex items-center justify-center gap-4 md:gap-6 mb-2">
-          <img src="/logo1C.svg" alt="1C" className="w-12 h-12 md:w-14 md:h-14" />
+          <img src="logo1C.svg" alt="1C" className="w-12 h-12 md:w-14 md:h-14" />
           <div className="text-center">
             <h1 className="text-2xl md:text-4xl font-extrabold text-green-900 tracking-tight">
               ФОРМУЛЫ для КОРРЕКТИРОВКИ
@@ -237,10 +246,12 @@ function App() {
               Автоматическая вставка формул в файл Excel
             </p>
           </div>
-          <img src="/logoXLSX.svg" alt="Excel" className="w-12 h-12 md:w-14 md:h-14" />
+          <img src="logoXLSX.svg" alt="Excel" className="w-12 h-12 md:w-14 md:h-14" />
         </div>
 
+        {/* Основная карточка */}
         <div className="w-full max-w-2xl bg-white rounded-2xl border-2 border-green-800 p-6 md:p-8 mt-6">
+          {/* Зона загрузки */}
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -277,6 +288,7 @@ function App() {
             </div>
           </div>
 
+          {/* Имя файла */}
           {fileName && (
             <div className="bg-green-50 rounded-xl p-4 mb-4 flex items-center justify-between border border-green-200">
               <div className="flex items-center">
@@ -300,6 +312,7 @@ function App() {
             </div>
           )}
 
+          {/* Статус */}
           {isProcessing && (
             <div className="bg-green-100 rounded-xl p-4 mb-4 flex items-center border border-green-300">
               <div className="animate-spin mr-3">
@@ -309,6 +322,7 @@ function App() {
             </div>
           )}
 
+          {/* Информация о строке */}
           {lastRowInfo > 0 && (
             <div className="bg-green-50 rounded-xl p-3 mb-4 flex items-center border border-green-200">
               <i className="fas fa-hashtag text-green-600 mr-3"></i>
@@ -318,6 +332,7 @@ function App() {
             </div>
           )}
 
+          {/* Успех */}
           {isSuccess && (
             <div className="bg-green-100 rounded-xl p-4 mb-4 flex items-start border-2 border-green-400">
               <i className="fas fa-check-circle text-green-600 mr-3 text-xl mt-0.5"></i>
@@ -330,6 +345,7 @@ function App() {
             </div>
           )}
 
+          {/* Ошибка */}
           {error && (
             <div className="bg-red-50 rounded-xl p-4 mb-4 flex items-start border-2 border-red-300">
               <i className="fas fa-exclamation-triangle text-red-500 mr-3 text-xl mt-0.5"></i>
@@ -340,6 +356,7 @@ function App() {
             </div>
           )}
 
+          {/* Описание действий */}
           <div className="bg-green-50/50 rounded-xl p-5 border border-green-200">
             <h3 className="text-green-900 font-bold mb-3 flex items-center">
               <i className="fas fa-list-check text-green-600 mr-2"></i>
@@ -374,11 +391,13 @@ function App() {
           </div>
         </div>
 
+        {/* Подпись под карточкой */}
         <div className="text-center mt-6 text-green-700/70 text-sm font-medium">
           <p>Лист: «Корректировка 1» | Ячейки: AS2–AS4, AT2–AT4</p>
         </div>
       </div>
 
+      {/* Футер с кнопкой версии */}
       <footer className="relative z-10 py-4 px-4 text-center">
         <button
           onClick={() => setShowVersionHistory(!showVersionHistory)}
@@ -387,6 +406,7 @@ function App() {
           Версия {APP_VERSION} от {APP_DATE}
         </button>
 
+        {/* Модальное окно истории версий */}
         {showVersionHistory && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowVersionHistory(false)}>
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
