@@ -344,7 +344,7 @@ function App() {
       <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative z-10">
         {/* Заголовок с логотипами */}
         <div className="flex items-center justify-center gap-4 md:gap-6 mb-2">
-          <img src="./logoIC.png" alt="1C" className="w-12 h-12 md:w-14 md:h-14 object-contain" />
+          <img src="./logo1C.png" alt="1C" className="w-12 h-12 md:w-14 md:h-14 object-contain" />
           <div className="text-center">
             <h1 className="text-2xl md:text-4xl font-extrabold text-green-900 tracking-tight">
               ФОРМУЛЫ для КОРРЕКТИРОВКИ
