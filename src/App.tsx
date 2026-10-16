@@ -370,28 +370,30 @@ function App() {
             }`}
             style={{ borderWidth: '3px', minHeight: '280px' }}
           >
-            <div className="mb-4">
-              <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center p-2">
-                <img src="./logoXLSX.png" alt="Excel" className="w-14 h-14 object-contain" />
+            <div className="flex flex-col items-center">
+              <div className="mb-4">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center p-2">
+                  <img src="./logoXLSX.png" alt="Excel" className="w-14 h-14 object-contain" />
+                </div>
               </div>
-            </div>
-            <p className="text-green-900 text-lg mb-1 font-semibold">
-              Укажите путь к файлу Корректировка
-            </p>
-            <p className="text-green-600 text-sm mb-5">
-              Перетащите файл Excel сюда или нажмите кнопку
-            </p>
-            <div className="mt-8">
-              <label className="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl cursor-pointer transition-all">
-                <FolderOpenIcon className="w-5 h-5 mr-2" />
-                Выбрать файл
-                <input
-                  type="file"
-                  accept=".xlsx,.xlsm"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
+              <p className="text-green-900 text-lg mb-1 font-semibold">
+                Укажите путь к файлу Корректировка
+              </p>
+              <p className="text-green-600 text-sm mb-5">
+                Перетащите файл Excel сюда или нажмите кнопку
+              </p>
+              <div className="mt-4">
+                <label className="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl cursor-pointer transition-all">
+                  <FolderOpenIcon className="w-5 h-5 mr-2" />
+                  Выбрать файл
+                  <input
+                    type="file"
+                    accept=".xlsx,.xlsm"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
           </div>
 
