@@ -136,22 +136,6 @@ const CheckIcon = ({ className = '' }: { className?: string }) => (
   </svg>
 );
 
-// Логотип 1С (inline SVG)
-const Logo1C = ({ className = '' }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-    <rect x="4" y="4" width="120" height="120" rx="16" fill="#fff" stroke="#d4202c" strokeWidth="4"/>
-    <text x="64" y="80" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontWeight="bold" fontSize="52" fill="#d4202c">1C</text>
-  </svg>
-);
-
-// Логотип Excel (inline SVG)
-const LogoXLSX = ({ className = '' }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-    <rect x="4" y="4" width="120" height="120" rx="16" fill="#217346" stroke="#185c37" strokeWidth="4"/>
-    <text x="64" y="82" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontWeight="bold" fontSize="60" fill="#fff">X</text>
-  </svg>
-);
-
 function App() {
   const [fileName, setFileName] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -360,7 +344,7 @@ function App() {
       <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative z-10">
         {/* Заголовок с логотипами */}
         <div className="flex items-center justify-center gap-4 md:gap-6 mb-2">
-          <Logo1C className="w-12 h-12 md:w-14 md:h-14" />
+          <img src="./logoIC.png" alt="1C" className="w-12 h-12 md:w-14 md:h-14 object-contain" />
           <div className="text-center">
             <h1 className="text-2xl md:text-4xl font-extrabold text-green-900 tracking-tight">
               ФОРМУЛЫ для КОРРЕКТИРОВКИ
@@ -369,7 +353,7 @@ function App() {
               Автоматическая вставка формул в файл Excel
             </p>
           </div>
-          <LogoXLSX className="w-12 h-12 md:w-14 md:h-14" />
+          <img src="./logoXLSX.png" alt="Excel" className="w-12 h-12 md:w-14 md:h-14 object-contain" />
         </div>
 
         {/* Основная карточка */}
